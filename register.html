@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <title> Register </title>
+</head>
+<body>
+  <form action="/register" method="post">
+    <div class="title">
+      <h3>Sign Up</h3>
+    </div>
+    <div class="field">
+      <div  style="border: 1px solid black">
+      <h3 style="margin-left:10px ">RULES:</h3>
+      <ol>
+        <li>Username should be an alphanumeric string with minimum 3 characters and max 15 characters</li>
+        <li>Password must have minimum eight characters, one letter and one number</li>
+      </ol>
+      </div><br>
+      <label>Username:</label>
+      <input type="text" name="username" />
+      <br />
+    </div>
+    <div class="field">
+      <label>Password:</label>
+      <input type="password" name="password" required />
+    </div>
+    <div class="field">
+      <input class="submit-btn" type="submit" value="Submit" required />
+    </div>
+    <label id="error-message" style="color: red"></label>
+    <a href="/login" style="text-decoration: none;">Click here to Login</a>
+  </form>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const info = urlParams.get('info');
+
+    if(info) {
+      const errorMessage = document.getElementById("error-message");
+      errorMessage.innerText = info;
+      errorMessage.style.display = "block";
+    }
+  </script>
+
+</body>
+</html>

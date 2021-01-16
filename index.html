@@ -1,0 +1,290 @@
+<html>
+	<head>
+		<script src = "/socket.io/socket.io.js"></script>
+		<script type="text/javascript">
+			var socket = io();
+			socket.on('welcome' ,function(data){
+				document.getElementById('welcome').innerHTML = data;
+			});
+			//When user enters a room
+			socket.on('connectToRoom',function(data) {
+				document.getElementById('show').style.display = "none";
+				document.getElementById('create').style.display = "none";
+				document.getElementById('stats').style.display = "none";
+				document.getElementById('statButton').style.display = "none";
+				document.getElementById("roomName").style.display = "none";    
+				document.getElementById("submitButton").style.display = "none";
+				document.getElementById("slideContainer").style.display = "none";
+				document.getElementById("leave").style.display = "block";
+         		document.getElementById('connectedToRoom').innerHTML = data;
+      		});
+
+      		socket.on('errorMsg',function(data){
+      			console.log(data);
+      			document.getElementById('errors').style.display = 'block';
+      			document.getElementById('errors').innerHTML = data;
+      			var i = 0;
+      			while(i < CardCount){
+      				document.getElementsByName('pick')[i].style.display = "block";
+      				i++;	
+      			}
+      		});
+      		var CardCount = 13;
+      		socket.on('pleasePlay', function(data){
+      			document.getElementById('yourTurn').innerHTML = data;
+      			var i = 0;
+      			while(i < CardCount){
+      				document.getElementsByName('pick')[i].style.display = "block";
+      				i++;	
+      			}
+      			CardCount--;
+      		});
+
+      		socket.on('requiredPlayers', function(data){
+      			document.getElementById('requiredPlayers').innerHTML = data;	
+      		});
+
+      		socket.on('initCards',function(data){
+      			var str = '';	
+				data.forEach(function(card) {
+					var arr = [];
+      				arr.push(card.suit);
+      				arr.push(card.description);
+  					str += '<input type=\'checkbox\' id='+'\''+arr+'\''+' name='+'\''+arr+'\''+'>';
+  					str+= '<label for ='+'\''+arr+'\''+ '>'+ arr[1] +' of ' + arr[0] + '</label><br>'
+				});
+
+				str += "<br><br><button id=\'pass\' onclick=\'passing()\'>Pass</button>"
+      			document.getElementById('cards').innerHTML = str;
+      		});
+
+      		socket.on('takeCards',function(data){
+      			document.getElementById('gameNumber').style.display = 'none';
+      			console.log(data);
+      			var str = '<ul>'
+
+				data.forEach(function(card) {
+					var arr = [];
+      				arr.push(card.suit);
+      				arr.push(card.description);
+  					str += '<li>'+ card.description + ' of ' + card.suit  + '<button name=\'pick\' style=\'display:none;\' onclick="pickCard(\''+arr+'\')"> Pick </button>' + '</li>';
+				}); 
+				str += '</ul>';
+      			document.getElementById('cards').innerHTML = str;
+      		});
+
+      		socket.on('takeScores',function(data){
+      			console.log(data);
+      			str = "<ol>";
+      			for(var temp in data){
+      				str += '<li>'+ data[temp].name + ' - ' + data[temp].score + '</li>';  	
+      			}
+      			str += '</ol>';
+      			document.getElementById('scores').innerHTML = str;
+      		});
+
+      		socket.on('roomFull',function(data){
+      			//alert('The selected room is full, please select another room');
+      			alert('Selected room is full, please select another room');      			
+      		})
+      		
+      		socket.on('beginGame', function(data){
+      			document.getElementById('beginGame').innerHTML = data;
+      		});
+
+      		socket.on('userExists',function(data){
+      			alert(data+ ". Socket is disconnected. Please close this window");	
+      		});
+
+      		socket.on('playersInTheRoom',function(data){
+     			document.getElementById('players').innerHTML = data; 				
+      		})
+
+      		//Consumes the event to get all existing rooms on the server
+      		socket.on('takeRooms',function(data) { // data => array of rooms containing room id and name
+      			document.getElementById("slideContainer").style.display = "block";  //display block for rooms
+      			if(data.length == 0) { // If no rooms are found
+      				document.getElementById('slideContainer').innerHTML = "No rooms found";
+      				return;
+      			}
+				//Preparing an unordered list to display the rooms     
+         		var str = '<ul>'
+
+				data.forEach(function(slide) {
+  					str += '<li>'+ slide.name + '(' + slide.id +')' + '<button onclick="joinGame(\''+slide.id+'\')"> Join </button>' + '</li>';
+				}); 
+				str += '</ul>';
+				document.getElementById("slideContainer").innerHTML = str;
+      		});
+      		var count = 1;
+      		//When some client plays a card
+      		socket.on('cardPlayed',function(data){
+      			document.getElementById('errors').style.display = 'none';
+      			document.getElementById('card'+count).style.display = 'block';
+      			document.getElementById('card'+count).innerHTML = data;
+      			count++;
+      			if(count == 5){
+      				count = 1;
+      			}
+      		});
+
+      		socket.on('winnerGame',function(data){
+      			alert(data);
+      		});
+
+      		socket.on('forefeit',function(data){
+      			alert(data);
+      			window.location.reload();
+      		})
+
+      		socket.on('roomErr',function(data){
+      			alert(data);
+      		});
+
+      		socket.on('takeStats',function(data){
+      			str = "<table> <tr> <th>Username</th> <th> Won</th> <th> Lost</th> ";
+      			for(var obj in data){
+      				str += "<tr><td>"+data[obj].username+"</td><td>"+data[obj].win+"</td><td>"+data[obj].loss+"</td></tr>"
+      			}
+      			str += "</table>"
+      			document.getElementById('stats').innerHTML = str;
+      		});	
+
+
+      		socket.on('turn',function(data){
+      			document.getElementById('turn').innerHTML = data; 
+      		});
+
+      		socket.on('trickEnded',function(data){
+      			alert(data);
+      			document.getElementById('turn').innerHTML = data; 
+      			document.getElementById('card1').innerHTML = '';
+      			document.getElementById('card2').innerHTML = '';
+      			document.getElementById('card3').innerHTML = '';
+      			document.getElementById('card4').innerHTML = '';
+      			
+      		});
+
+      		socket.on('newCards',function(data){
+      			document.getElementById('newCards').innerHTML = data;
+      		});
+
+      		socket.on('gameNumber',function(data){
+      			var str = "";
+      			if(data % 4 == 1){
+      				str = "Players will pass cards clockwise in this Game";
+      			}
+      			if(data % 4 == 2){
+      				str = "Players will pass cards anti-clockwise in this Game"
+      			}
+      			if(data % 4 == 3){
+      				str = "Players will pass cards across the table in this Game";
+      			}
+      			if(data % 4 == 0){
+      				str = "No passing in this round";
+      			}
+      			document.getElementById('gameNumber').innerHTML = str;
+      		})
+
+      		function passing(){
+      			var array = [];
+				var checkboxes = document.querySelectorAll('input[type=checkbox]:checked')
+				if(checkboxes.length != 3) {
+					alert('Please select 3 checkboxes');
+					return;
+				}
+				for (var i = 0; i < checkboxes.length; i++) {
+				  array.push(checkboxes[i].name);
+				}
+				document.getElementById('pass').style.display = 'none';
+
+				socket.emit('passing',array);
+      		}
+
+
+      		//Function is trigrred when client picks a card	
+      		function pickCard(data){
+      			console.log(data);
+      			document.getElementById('yourTurn').style.display = "none";
+      			var i = 0;
+      			while(i < CardCount){
+      				document.getElementsByName('pick')[i].style.display = "none";
+      				i++;	
+      			}
+      			socket.emit('cardPicked',data); //card is sent to the server
+      		}
+
+      		//This function is trigerred when the user clicks on a particular room to join
+      		function joinGame(data){ // data => This is the room id
+      			socket.emit('joinRoom',data); //emits an event with the room id 
+      		}
+      		
+      		//Function to display a text field to enter the name of the room that the user wants to create
+			function showText(){
+				 document.getElementById("slideContainer").style.display = "none";
+				 document.getElementById("stats").style.display = "none";
+				 document.getElementById("roomName").style.display = "block";
+				 document.getElementById("submitButton").style.display = "block";	
+			}
+			//This function is called when the user hits create room button 
+			function createRoom(){
+				var roomName = document.getElementById('roomName').value; // get the input that the user typed
+				if(roomName.length == 0) return; // check if it is not empty
+				socket.emit('createRoom',roomName); // emits an event to create with the room name providec by user
+			}
+			//This function is called when the user clicks the button Join Existing Rooms
+			function showRooms(){
+				document.getElementById("stats").style.display = "none";
+				document.getElementById("roomName").style.display = "none";   //hide other stuff on the page 
+				document.getElementById("submitButton").style.display = "none"; 
+				socket.emit('getRooms'); //emit the event to display all the rooms on the server
+			}	
+
+			function leaveRoom(){
+				window.location.reload();
+			}
+			function showStats(){
+				document.getElementById('stats').style.display = 'block';
+				document.getElementById('slideContainer').style.display = 'none';
+			}
+
+			
+		</script>
+		<style>
+			tr,th{
+				border: 1px solid;
+			}
+		</style>	
+	</head>
+	<body>
+		<div id='scores' style="float:right"></div>
+		<h1 id='welcome'></h1>
+		<button id = "create" onclick="showText()"> Create Room </button>
+		<button id = "show" onclick="showRooms()"> Join Existing Rooms </button>
+		<button id = "statButton" onclick="showStats()"> Show Stats </button>
+		<div id ="stats" style="display: none"></div>
+		<button id = "leave" onclick="leaveRoom()" style="display: none"> Leave Room </button>
+		<button><a href="/logout"> Log out </a></button>
+		<br><br>
+		<h3 id="gameNumber"></h3>
+		<div id='errors' style="color: red"></div>
+		<input type = "text" id="roomName" style="display: none"> <br>
+		<input type = "submit" id="submitButton" value="Create" onclick="createRoom()" style="display: none">
+		<div id="slideContainer"></div> 
+		<div id ="connectedToRoom"></div>
+		<div id ="requiredPlayers"></div>
+		<div id ="beginGame"></div>
+		<div id="players"></div>
+		<br>
+		<div id='newCards' style="color:green;"></div>
+		<div id="cards"></div>
+		<div id="table">
+			<p id="card1"></p>
+			<p id="card2"></p>
+			<p id="card3"></p>
+			<p id="card4"></p>
+		</div>
+		<div id='turn'></div>
+		<div id='yourTurn'></div>
+	</body>
+</html>
